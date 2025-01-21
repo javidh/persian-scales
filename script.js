@@ -41,7 +41,7 @@ function createPiano(containerId) {
   const baseFrequency = 164.814 
   const baseNote = 'E3' // todo: this should be calculated from frequency
   const octaves = 4
-  const scale = 'nava'
+  const scale = 'shoor'
   // end run def
   const notes = []
   for (o = 0; o < octaves; o++) {
