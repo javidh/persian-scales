@@ -38,7 +38,7 @@ function createPiano(containerId) {
     nava: [0, 4, 6, 10, 14, 17, 20],
   }
   // run def
-  const baseFrequency = 164.814 //g3
+  const baseFrequency = 164.814 
   const baseNote = 'E3' // todo: this should be calculated from frequency
   const octaves = 4
   const scale = 'nava'
