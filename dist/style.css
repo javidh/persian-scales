@@ -1,0 +1,34 @@
+body {
+  text-align: center;
+  font-family: Arial, sans-serif;
+}
+
+.piano {
+  display: flex;
+  justify-content: center;
+  margin-top: 50px;
+}
+
+.key {
+  width: 60px;
+  height: 200px;
+  margin: 2px;
+  background-color: white;
+  border: 1px solid black;
+  text-align: center;
+  line-height: 200px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
+}
+
+.key:active {
+  background-color: lightblue;
+}
+
+.pressed {
+  background-color: yellow; /* Change the background color to indicate the key is pressed */
+  box-shadow: 0 0 10px rgba(255, 255, 0, 0.6); /* Add a glowing effect */
+  transform: scale(1.1); /* Optional: Slightly enlarge the key when pressed */
+  transition: transform 0.1s ease, background-color 0.1s ease, box-shadow 0.1s ease;
+}
