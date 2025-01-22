@@ -40,23 +40,15 @@ function playNote(frequency) {
   }
 }
 
-function createPiano(containerId) {
+function createPiano(containerId, scaleIntervalsStr, baseFrequency, octaves) {
+  scaleIntervals = scaleIntervalsStr.split(',')
+  console.log(scaleIntervals, baseFrequency, octaves)
   const container = document.getElementById(containerId);
+  container.innerHTML = ''
 
-  const scales = {
-    aeolian: [0, 4, 6, 10, 14, 16, 20], // 1 = 50 cents
-    shoor: [0, 3, 6, 10, 14, 16, 20],
-    nava: [0, 4, 6, 10, 14, 17, 20],
-  }
-  // run def
-  const baseFrequency = 164.814
-  const baseNote = 'E3' // todo: this should be calculated from frequency
-  const octaves = 4
-  const scale = 'shoor'
-  // end run def
   const notes = []
   for (o = 0; o < octaves; o++) {
-    scales[scale].forEach(d => notes.push({ name: `${d}|${o}`, frequency: baseFrequency * 2 ** (o + d / 24) }))
+    scaleIntervals.forEach(d => notes.push({ name: `${d}|${o}`, frequency: baseFrequency * 2 ** (o + d / 24) }))
   }
   notes.push({ name: `0|${octaves}`, frequency: baseFrequency * 2 ** octaves })// boundary
 
@@ -78,36 +70,86 @@ function createPiano(containerId) {
 
   // keyboard integration
   const keyboardAsPiano = ['z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']']
-  window.addEventListener('keydown', (event) => {
+  const handleKeyDown = (event) => {
     const key = event.key.toLowerCase(); // Ensure the key is lowercase
-    console.log(key)
     const noteIndex = keyboardAsPiano.indexOf(key);
     if (noteIndex >= 0 && noteIndex < notes.length - 1) {
-      playNote(notes[noteIndex].frequency);
+      // playNote(notes[noteIndex].frequency);
       // Get the corresponding key element
-      console.log(pianoDiv.children[noteIndex])
       const keyElement = pianoDiv.children[noteIndex];
 
       // Add a 'pressed' class to trigger the CSS effect
       keyElement.classList.add('pressed');
+      keyElement.removeAttribute
+      console.log(keyElement)
+      keyElement.isConnected && keyElement.click();
 
       // Remove the 'pressed' class after 200ms
       setTimeout(() => {
         keyElement.classList.remove('pressed');
       }, 200);
     }
-  });
+  };
+  window.removeEventListener('keydown', handleKeyDown);
+  window.addEventListener('keydown', handleKeyDown);
 
   // Function to calculate the cents between two frequencies
   function calculateCents(f1, f2) {
     return 1200 * Math.log2(f2 / f1);
   }
-  const title = document.createElement('h1');
-  title.innerHTML = `${baseNote} in ${scale}`;
-  container.appendChild(title);
+
   container.appendChild(pianoDiv);
 }
 
+function createSelector(containerId, options, currentval, callback) {
+  const selector = document.getElementById(containerId)
+  selector.innerHTML = Object.keys(options)
+    .map(name => {
+      return `<option ${options[name] == currentval ? 'selected ' : ''}value="${options[name]}">${name}</option>`
+    })
+    .join("");
+  selector.addEventListener("change", (event) => {
+    console.log(event.target.value);
+    callback(event.target.value);
+  });
+}
 
+function rerender() {
+  createPiano('piano-container', scale, baseFrequency, octave);
+}
+const scales = {
+  aeolian: [0, 4, 6, 10, 14, 16, 20], // 1 = 50 cents
+  shoor: [0, 3, 6, 10, 14, 16, 20],
+  nava: [0, 4, 6, 10, 14, 17, 20],
+  homayoon: [0, 3, 8, 10, 14, 16, 20]
+}
+const baseNotesFrequencies = {
+  C2: 65.41,  // C2 frequency
+  D2: 73.42,  // D2 frequency
+  E2: 82.41,  // E2 frequency
+  F2: 87.31,  // F2 frequency
+  G2: 98.00,  // G2 frequency
+  A2: 110.00, // A2 frequency
+  B2: 123.47, // B2 frequency
+};
+const octaves = { 1: 1, 2: 2, 3: 3, 4: 4 }
 
-window.onload = () => createPiano('piano-container');
+let scale = scales['shoor'].join(',');
+let baseFrequency = baseNotesFrequencies['C2']
+let octave = octaves[4]
+
+window.onload = () => {
+  createSelector('base-note-selector', baseNotesFrequencies, baseFrequency, freq => {
+    baseFrequency = freq;
+    rerender();
+  })
+  createSelector('scale-selector', scales, scale, s => {
+    scale = s;
+    rerender();
+  })
+  createSelector('octave-selector', octaves, octave, o => {
+    octave = o;
+    rerender();
+  })
+  rerender();
+}
