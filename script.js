@@ -33,7 +33,7 @@ function createEnvelope(audioContext, gainNode, startTime) {
 function releaseEnvelope(audioContext, gainNode, startTime) {
   const gain = gainNode.gain;
   gain.cancelScheduledValues(startTime);
-  gain.setValueAtTime(gain.value, startTime);
+  gain.setValueAtTime(ADSR.sustain, startTime);
   gain.linearRampToValueAtTime(0, startTime + ADSR.release);
   return startTime + ADSR.release;
 }
@@ -71,8 +71,9 @@ function playNote(frequency) {
   oscillators.forEach(osc => osc.start(startTime));
 
   // Schedule release and cleanup
-  const stopTime = startTime + 0.9; // Total note duration
-  const releaseStartTime = stopTime - ADSR.release;
+  const noteLength = 1
+  const stopTime = startTime + noteLength; // Total note duration
+  const releaseStartTime = Math.max(stopTime, decayEndTime)-ADSR.release;
 
   // Apply release envelope
   releaseEnvelope(audioContext, noteGain, releaseStartTime);
