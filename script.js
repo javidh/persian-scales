@@ -1,3 +1,4 @@
+
 const singletons = {}
 const getSingleton = (id, callback) => {
   if (!singletons[id]) {
@@ -5,6 +6,37 @@ const getSingleton = (id, callback) => {
   }
   return singletons[id];
 };
+
+// ADSR envelope parameters
+const ADSR = {
+  attack: 0.1,  // Attack time in seconds
+  decay: 0.2,   // Decay time in seconds
+  sustain: 0.7, // Sustain level (0-1)
+  release: 0.5  // Release time in seconds
+};
+
+function createEnvelope(audioContext, gainNode, startTime) {
+  const gain = gainNode.gain;
+
+  // Starting from zero
+  gain.setValueAtTime(0, startTime);
+
+  // Attack phase - ramp up to full volume
+  gain.linearRampToValueAtTime(1, startTime + ADSR.attack);
+
+  // Decay phase - ramp down to sustain level
+  gain.linearRampToValueAtTime(ADSR.sustain, startTime + ADSR.attack + ADSR.decay);
+
+  return startTime + ADSR.attack + ADSR.decay; // Return the time when decay phase ends
+}
+
+function releaseEnvelope(audioContext, gainNode, startTime) {
+  const gain = gainNode.gain;
+  gain.cancelScheduledValues(startTime);
+  gain.setValueAtTime(gain.value, startTime);
+  gain.linearRampToValueAtTime(0, startTime + ADSR.release);
+  return startTime + ADSR.release;
+}
 function playNote(frequency) {
   const audioContext = getSingleton('audioContext', () => new (window.AudioContext || window.webkitAudioContext)());
   const masterGain = getSingleton('masterGain', () => {
@@ -14,30 +46,39 @@ function playNote(frequency) {
   });
 
   console.log("playing", frequency);
-  const gainNode = audioContext.createGain();
+  const noteGain = audioContext.createGain();
   const oscillators = []
   for (i of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]) {
-    const harmonicGainNode = audioContext.createGain();
+    const harmonicGain = audioContext.createGain();
     const oscillator = audioContext.createOscillator();
 
     oscillator.type = 'sine'; // Sound wave type
-    const randmoizer = 1 + (0.5 - Math.random()) * .01
-    // const randmoizer = 1
+    // const randmoizer = 1 + (0.5 - Math.random()) * .01
+    const randmoizer = 1
     oscillator.frequency.setValueAtTime(i * frequency * randmoizer, audioContext.currentTime);
-    harmonicGainNode.gain.setValueAtTime(0.2 / (2 ** (i - 1)), audioContext.currentTime)
-    oscillator.connect(harmonicGainNode)
+    harmonicGain.gain.setValueAtTime(0.2 / (2 ** (i - 1)), audioContext.currentTime)
+    oscillator.connect(harmonicGain)
     oscillators.push(oscillator)
-    harmonicGainNode.connect(gainNode);
+    harmonicGain.connect(noteGain);
   }
-  gainNode.connect(masterGain);
+  noteGain.connect(masterGain);
 
-  gainNode.gain.setValueAtTime(0.9, audioContext.currentTime); // Volume control
-  for (const oscillator of oscillators) {
-    oscillator.start();
-    const time = 1.5;
-    gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + time); // Fade out in 3 seconds
-    oscillator.stop(audioContext.currentTime + time); // Stop after 0.5 seconds}
-  }
+  // Apply ADSR envelope
+  const startTime = audioContext.currentTime;
+  const decayEndTime = createEnvelope(audioContext, noteGain, startTime);
+
+  // Start oscillators
+  oscillators.forEach(osc => osc.start(startTime));
+
+  // Schedule release and cleanup
+  const stopTime = startTime + 0.9; // Total note duration
+  const releaseStartTime = stopTime - ADSR.release;
+
+  // Apply release envelope
+  releaseEnvelope(audioContext, noteGain, releaseStartTime);
+
+  // Stop oscillators
+  oscillators.forEach(osc => osc.stop(stopTime));
 }
 
 function createPiano(containerId, scaleIntervalsStr, baseFrequency, octaves) {
