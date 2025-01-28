@@ -125,7 +125,7 @@ function createPiano(containerId, scaleIntervalsStr, baseFrequency, octaves) {
   };
 
   // keyboard integration
-  const keyboardAsPiano = ['z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']']
+  const keyboardAsPiano = 'zxcvbnmasdfghjqwertyu1234567890-='.split('')
   const handleKeyDown = (event) => {
     const key = event.key.toLowerCase(); // Ensure the key is lowercase
     const noteIndex = keyboardAsPiano.indexOf(key);
