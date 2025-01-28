@@ -41,25 +41,39 @@ function playNote(frequency) {
   const audioContext = getSingleton('audioContext', () => new (window.AudioContext || window.webkitAudioContext)());
   const masterGain = getSingleton('masterGain', () => {
     const gain = audioContext.createGain();
+    gain.gain.setValueAtTime(1, audioContext.currentTime);
     gain.connect(audioContext.destination);
     return gain;
   });
 
   console.log("playing", frequency);
   const noteGain = audioContext.createGain();
-  const oscillators = []
-  for (i of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]) {
-    const harmonicGain = audioContext.createGain();
+  const oscillators = [];
+  
+  // Calculate total number of harmonics for normalization
+  const harmonics = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,15,16];
+  const totalHarmonics = harmonics.length;
+  
+  // Create harmonics with proper gain scaling
+  for (let i of harmonics) {
+    const harmonicGainNode = audioContext.createGain();
     const oscillator = audioContext.createOscillator();
 
-    oscillator.type = 'sine'; // Sound wave type
-    // const randmoizer = 1 + (0.5 - Math.random()) * .01
-    const randmoizer = 1
-    oscillator.frequency.setValueAtTime(i * frequency * randmoizer, audioContext.currentTime);
-    harmonicGain.gain.setValueAtTime(0.2 / (2 ** (i - 1)), audioContext.currentTime)
-    oscillator.connect(harmonicGain)
-    oscillators.push(oscillator)
-    harmonicGain.connect(noteGain);
+    oscillator.type = 'sine';
+    const randomizer = 1 + (0.5 - Math.random()) * 0.01;
+    oscillator.frequency.setValueAtTime(i * frequency * randomizer, audioContext.currentTime);
+    
+    // Reduce harmonic gain based on:
+    // 1. Harmonic number (higher harmonics are quieter)
+    // 2. Total number of harmonics (prevent summing to >1)
+    // 3. Additional scaling factor for safety
+    const maxSimultaneousNotes = 5
+    const harmonicGain = (1 / (2 ** (i - 1))) * (1 / totalHarmonics) * (1/maxSimultaneousNotes);
+    harmonicGainNode.gain.setValueAtTime(harmonicGain, audioContext.currentTime);
+    
+    oscillator.connect(harmonicGainNode);
+    harmonicGainNode.connect(noteGain);
+    oscillators.push(oscillator);
   }
   noteGain.connect(masterGain);
 
