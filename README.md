@@ -11,3 +11,5 @@ Use your keyboard or mouse to play the instrument. The width of each key is rele
 - nava
 - homayoon
 
+see also:  https://sevish.com/scaleworkshop/?n=shoor&l=3Bo_6Bo_aBo_eBo_gBo_kBo_oBo&version=2.5.7
+
